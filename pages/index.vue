@@ -1,142 +1,232 @@
 <template>
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-5rem)]">
-    <!-- Left column - Video player and list -->
-    <div class="flex flex-col h-full overflow-hidden">
-      <!-- Video player -->
-      <div v-if="selectedVideo !== null && predictions?.[selectedVideo]" class="mb-4 flex-shrink-0">
-        <div class="aspect-video bg-black rounded-lg shadow-lg">
-          <iframe
-            ref="youtubePlayer"
-            :src="getYouTubeEmbedUrl(predictions[selectedVideo].url)"
-            class="w-full h-full rounded-lg"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowfullscreen
-          ></iframe>
-        </div>
-      </div>
-      
-      <!-- Video list -->
-      <div class="flex-1 overflow-y-auto min-h-0">
-        <h2 class="text-lg font-semibold mb-4 sticky top-0 bg-gray-950 z-10">Videos</h2>
-        
-        <div v-if="pending" class="space-y-2">
-          <div v-for="i in 4" :key="i" class="flex gap-3 p-3 bg-gray-900 rounded-lg animate-pulse">
-            <div class="w-32 h-20 bg-gray-800 rounded"></div>
-            <div class="flex-1 space-y-2">
-              <div class="h-4 bg-gray-800 rounded w-3/4"></div>
-              <div class="h-3 bg-gray-800 rounded w-1/2"></div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-5rem)]">
+        <!-- Left column - Video player and list -->
+        <div class="flex flex-col h-full overflow-hidden">
+            <!-- Video player -->
+            <div
+                v-if="selectedVideo !== null && predictions?.[selectedVideo]"
+                class="mb-4 flex-shrink-0"
+            >
+                <div class="aspect-video bg-black rounded-lg shadow-lg">
+                    <iframe
+                        ref="youtubePlayer"
+                        :src="
+                            getYouTubeEmbedUrl(predictions[selectedVideo].url)
+                        "
+                        class="w-full h-full rounded-lg"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen
+                    ></iframe>
+                </div>
             </div>
-          </div>
-        </div>
-        
-        <div v-else-if="error" class="text-red-500">
-          <p>Error: {{ error.message }}</p>
-        </div>
-        
-        <div v-else class="space-y-2">
-          <div
-            v-for="(prediction, index) in predictions"
-            :key="index"
-            @click="selectedVideo = index"
-            :class="[
-              'flex gap-3 p-3 rounded-lg cursor-pointer transition-colors',
-              selectedVideo === index ? 'bg-gray-800' : 'bg-gray-900 hover:bg-gray-800'
-            ]"
-          >
-            <img
-              :src="getThumbnailUrl(prediction.url)"
-              :alt="prediction.title"
-              class="w-32 h-20 object-cover rounded"
-            />
-            <div class="flex-1 min-w-0">
-              <h3 class="font-medium text-sm line-clamp-2">
-                {{ prediction.title || `VLM Prediction ${index + 1}` }}
-              </h3>
-              <p class="text-xs text-gray-400 mt-1">
-                {{ formatDuration(prediction.duration || 240) }}
-              </p>
+
+            <!-- Video list -->
+            <div class="flex-1 overflow-y-auto min-h-0">
+                <h2
+                    class="text-lg font-semibold mb-4 sticky top-0 bg-gray-950 z-10"
+                >
+                    Videos
+                </h2>
+
+                <div v-if="pending" class="space-y-2">
+                    <div
+                        v-for="i in 4"
+                        :key="i"
+                        class="flex gap-3 p-3 bg-gray-900 rounded-lg animate-pulse"
+                    >
+                        <div class="w-32 h-20 bg-gray-800 rounded"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 bg-gray-800 rounded w-3/4"></div>
+                            <div class="h-3 bg-gray-800 rounded w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-else-if="error" class="text-red-500">
+                    <p>Error: {{ error.message }}</p>
+                </div>
+
+                <div v-else class="space-y-2">
+                    <div
+                        v-for="(prediction, index) in predictions"
+                        :key="index"
+                        @click="selectedVideo = index"
+                        :class="[
+                            'flex gap-3 p-3 rounded-lg cursor-pointer transition-colors',
+                            selectedVideo === index
+                                ? 'bg-gray-800'
+                                : 'bg-gray-900 hover:bg-gray-800',
+                        ]"
+                    >
+                        <img
+                            :src="getThumbnailUrl(prediction.url)"
+                            :alt="prediction.title"
+                            class="w-32 h-20 object-cover rounded"
+                        />
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-medium text-sm line-clamp-2">
+                                {{
+                                    prediction.title ||
+                                    `VLM Prediction ${index + 1}`
+                                }}
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-1">
+                                {{
+                                    formatDuration(
+                                        prediction.response?.metadata
+                                            ?.duration || 0
+                                    )
+                                }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
+
+        <!-- Right column - Transcript -->
+        <div class="bg-gray-900 rounded-lg p-6 overflow-y-auto">
+            <div v-if="selectedVideo !== null && predictions?.[selectedVideo]">
+                <h3 class="text-lg font-semibold mb-4">Transcript</h3>
+
+                <!-- Metadata -->
+                <UCard :ui="{ body: { padding: 'p-3' } }" class="mb-4">
+                    <div class="text-sm space-y-1">
+                        <p>
+                            <span class="text-gray-400">Duration:</span>
+                            {{
+                                formatDuration(
+                                    predictions[selectedVideo].response
+                                        ?.metadata?.duration || 0
+                                )
+                            }}
+                        </p>
+                        <p>
+                            <span class="text-gray-400">Created:</span>
+                            {{
+                                formatDate(
+                                    predictions[selectedVideo].created_at
+                                )
+                            }}
+                        </p>
+                    </div>
+                </UCard>
+
+                <!-- Segments -->
+                <div class="space-y-3">
+                    <div
+                        class="bg-blue-900/20 border border-blue-800/50 rounded-lg p-3 mb-4"
+                    >
+                        <p
+                            class="text-sm text-blue-300 flex items-center gap-2"
+                        >
+                            <UIcon
+                                name="i-heroicons-cursor-arrow-rays"
+                                class="w-5 h-5"
+                            />
+                            Click any timestamp button to jump to that moment in
+                            the video
+                        </p>
+                    </div>
+                    <div
+                        v-for="(segment, idx) in predictions[selectedVideo]
+                            .response?.segments || []"
+                        :key="idx"
+                        :id="`segment-${idx}`"
+                        class="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-all duration-300 border border-gray-700 hover:border-gray-600"
+                    >
+                        <div class="flex items-center gap-2 mb-3">
+                            <UButton
+                                :label="formatTimestamp(segment.start_time)"
+                                size="md"
+                                color="primary"
+                                variant="solid"
+                                icon="i-heroicons-play-circle"
+                                @click="seekToTime(segment.start_time)"
+                                class="hover:scale-105 transition-transform flex items-center gap-x-1 cursor-pointer"
+                                :ui="{ base: 'font-mono font-medium' }"
+                            />
+                            <UIcon
+                                name="i-heroicons-arrow-right"
+                                class="text-gray-500 w-4 h-4"
+                            />
+                            <UButton
+                                :label="formatTimestamp(segment.end_time)"
+                                size="md"
+                                color="gray"
+                                variant="soft"
+                                icon="i-heroicons-stop-circle"
+                                @click="seekToTime(segment.end_time)"
+                                class="hover:scale-105 transition-transform flex items-center gap-x-1 cursor-pointer"
+                                :ui="{ base: 'font-mono' }"
+                            />
+                        </div>
+
+                        <div v-if="segment.audio?.content" class="mb-2">
+                            <p
+                                class="text-xs text-gray-400 mb-1 font-semibold uppercase tracking-wider"
+                            >
+                                Audio Transcript:
+                            </p>
+                            <p
+                                class="text-sm leading-relaxed"
+                                v-html="
+                                    highlightSearchTerm(
+                                        segment.audio.content,
+                                        idx
+                                    )
+                                "
+                            ></p>
+                        </div>
+
+                        <div v-if="segment.video?.content">
+                            <p
+                                class="text-xs text-gray-400 mb-1 font-semibold uppercase tracking-wider"
+                            >
+                                Video Content:
+                            </p>
+                            <p
+                                class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed"
+                                v-html="
+                                    highlightSearchTerm(
+                                        segment.video.content,
+                                        idx
+                                    )
+                                "
+                            ></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                v-else-if="pending"
+                class="flex items-center justify-center h-full"
+            >
+                <div class="text-center">
+                    <UIcon
+                        name="i-heroicons-arrow-path"
+                        class="w-12 h-12 mb-2 animate-spin text-gray-500"
+                    />
+                    <p class="text-gray-500">Loading transcripts...</p>
+                </div>
+            </div>
+
+            <div
+                v-else
+                class="flex items-center justify-center h-full text-gray-500"
+            >
+                <div class="text-center">
+                    <UIcon
+                        name="i-heroicons-document-text"
+                        class="w-12 h-12 mb-2"
+                    />
+                    <p>No video selected</p>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <!-- Right column - Transcript -->
-    <div class="bg-gray-900 rounded-lg p-6 overflow-y-auto">
-      <div v-if="selectedVideo !== null && predictions?.[selectedVideo]">
-        <h3 class="text-lg font-semibold mb-4">Transcript</h3>
-        
-        <!-- Metadata -->
-        <UCard :ui="{ body: { padding: 'p-3' } }" class="mb-4">
-          <div class="text-sm space-y-1">
-            <p><span class="text-gray-400">Duration:</span> {{ formatDuration(predictions[selectedVideo].response?.metadata?.duration || 0) }}</p>
-            <p><span class="text-gray-400">Created:</span> {{ formatDate(predictions[selectedVideo].created_at) }}</p>
-          </div>
-        </UCard>
-        
-        <!-- Segments -->
-        <div class="space-y-3">
-          <p class="text-sm text-gray-400 mb-2">
-            <UIcon name="i-heroicons-information-circle" class="w-4 h-4 inline mr-1" />
-            Click timestamps to jump to that moment in the video
-          </p>
-          <div
-            v-for="(segment, idx) in predictions[selectedVideo].response?.segments || []"
-            :key="idx"
-            :id="`segment-${idx}`"
-            class="bg-gray-800 rounded-lg p-4 hover:bg-gray-750 transition-all duration-300 border border-gray-700 hover:border-gray-600"
-          >
-            <div class="flex items-center gap-2 mb-2">
-              <UButton
-                :label="formatTimestamp(segment.start_time)"
-                size="sm"
-                color="primary"
-                variant="solid"
-                icon="i-heroicons-play-circle"
-                @click="seekToTime(segment.start_time)"
-                class="hover:scale-105 transition-transform"
-              />
-              <span class="text-xs text-gray-400">→</span>
-              <UButton
-                :label="formatTimestamp(segment.end_time)"
-                size="sm"
-                color="gray"
-                variant="outline"
-                icon="i-heroicons-stop-circle"
-                @click="seekToTime(segment.end_time)"
-                class="hover:scale-105 transition-transform"
-              />
-            </div>
-            
-            <div v-if="segment.audio?.content" class="mb-2">
-              <p class="text-xs text-gray-400 mb-1">Audio:</p>
-              <p class="text-sm">{{ segment.audio.content }}</p>
-            </div>
-            
-            <div v-if="segment.video?.content">
-              <p class="text-xs text-gray-400 mb-1">Video:</p>
-              <p class="text-sm text-gray-300 whitespace-pre-wrap">{{ segment.video.content }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div v-else-if="pending" class="flex items-center justify-center h-full">
-        <div class="text-center">
-          <UIcon name="i-heroicons-arrow-path" class="w-12 h-12 mb-2 animate-spin text-gray-500" />
-          <p class="text-gray-500">Loading transcripts...</p>
-        </div>
-      </div>
-      
-      <div v-else class="flex items-center justify-center h-full text-gray-500">
-        <div class="text-center">
-          <UIcon name="i-heroicons-document-text" class="w-12 h-12 mb-2" />
-          <p>No video selected</p>
-        </div>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -145,122 +235,180 @@ import { videosData } from '~/data/videos'
 const route = useRoute()
 const selectedVideo = ref<number | null>(0) // Auto-select first video
 const youtubePlayer = ref<HTMLIFrameElement | null>(null)
+const currentSearchTerm = ref<string>('')
+const highlightedSegmentIndex = ref<number | null>(null)
 
 // Use state management for predictions
 const predictionsState = useState<any[]>('predictions', () => [])
 
-const { data: predictions, pending, error } = await useFetch('/api/predictions/batch', {
-  method: 'POST',
-  body: {
-    ids: videosData.map(item => item.id)
-  },
-  transform: (response) => {
-    return response
-      .filter(item => item.data !== null)
-      .map((item, index) => ({
-        ...item.data,
-        url: videosData[index].url,
-        title: `VLM Prediction Analysis ${index + 1}`,
-        duration: Math.floor(Math.random() * 600) + 60
-      }))
-  }
+const {
+    data: predictions,
+    pending,
+    error,
+} = await useFetch('/api/predictions/batch', {
+    method: 'POST',
+    body: {
+        ids: videosData.map(item => item.id),
+    },
+    transform: response => {
+        return response
+            .filter(item => item.data !== null)
+            .map((item, index) => ({
+                ...item.data,
+                url: videosData[index].url,
+                title: videosData[index].title || `VLM Prediction Analysis ${index + 1}`,
+            }))
+    },
 })
 
 // Update state when predictions are loaded
 watchEffect(() => {
-  if (predictions.value) {
-    predictionsState.value = predictions.value
-  }
+    if (predictions.value) {
+        predictionsState.value = predictions.value
+    }
 })
 
 // Handle search navigation
-watch(() => route.query, (query) => {
-  if (query.video !== undefined && query.time !== undefined) {
-    const videoIndex = parseInt(query.video as string)
-    const timestamp = parseInt(query.time as string)
-    const segmentIndex = query.segment ? parseInt(query.segment as string) : undefined
-    
-    if (!isNaN(videoIndex) && predictions.value?.[videoIndex]) {
-      selectedVideo.value = videoIndex
-      
-      // Wait for video to load then seek
-      nextTick(() => {
-        setTimeout(() => {
-          seekToTime(timestamp)
-          
-          // Scroll to segment if provided
-          if (segmentIndex !== undefined) {
-            scrollToSegment(segmentIndex)
-          }
-        }, 500)
-      })
-    }
-  }
-}, { immediate: true })
+watch(
+    () => route.query,
+    query => {
+        if (query.video !== undefined && query.time !== undefined) {
+            const videoIndex = parseInt(query.video as string)
+            const timestamp = parseInt(query.time as string)
+            const segmentIndex = query.segment
+                ? parseInt(query.segment as string)
+                : undefined
+            const searchTerm = (query.q as string) || ''
+
+            if (!isNaN(videoIndex) && predictions.value?.[videoIndex]) {
+                selectedVideo.value = videoIndex
+                currentSearchTerm.value = searchTerm
+                highlightedSegmentIndex.value = segmentIndex ?? null
+
+                // Wait for video to load then seek
+                nextTick(() => {
+                    setTimeout(() => {
+                        seekToTime(timestamp)
+
+                        // Scroll to segment if provided
+                        if (segmentIndex !== undefined) {
+                            scrollToSegment(segmentIndex)
+                        }
+                    }, 500)
+                })
+            }
+        }
+    },
+    { immediate: true }
+)
 
 function getThumbnailUrl(url: string): string {
-  const videoId = url.split('v=')[1]?.split('&')[0]
-  return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+    const videoId = url.split('v=')[1]?.split('&')[0]
+    return `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
 }
 
 function getYouTubeEmbedUrl(url: string): string {
-  const videoId = url.split('v=')[1]?.split('&')[0]
-  return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`
+    const videoId = url.split('v=')[1]?.split('&')[0]
+    return `https://www.youtube.com/embed/${videoId}?enablejsapi=1`
 }
 
 function formatDuration(seconds: number): string {
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
 function formatTimestamp(seconds: number): string {
-  const hours = Math.floor(seconds / 3600)
-  const mins = Math.floor((seconds % 3600) / 60)
-  const secs = Math.floor(seconds % 60)
-  
-  if (hours > 0) {
-    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+    const hours = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
+    const secs = Math.floor(seconds % 60)
+
+    if (hours > 0) {
+        return `${hours}:${mins.toString().padStart(2, '0')}:${secs
+            .toString()
+            .padStart(2, '0')}`
+    }
+    return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
 function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
 }
 
 function seekToTime(seconds: number) {
-  if (!youtubePlayer.value || selectedVideo.value === null) return
-  
-  const url = predictions.value?.[selectedVideo.value]?.url
-  if (!url) return
-  
-  const videoId = url.split('v=')[1]?.split('&')[0]
-  const currentSrc = youtubePlayer.value.src
-  
-  // Update the iframe src with the timestamp
-  youtubePlayer.value.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&start=${Math.floor(seconds)}&autoplay=1`
+    if (!youtubePlayer.value || selectedVideo.value === null) return
+
+    const url = predictions.value?.[selectedVideo.value]?.url
+    if (!url) return
+
+    const videoId = url.split('v=')[1]?.split('&')[0]
+    const currentSrc = youtubePlayer.value.src
+
+    // Update the iframe src with the timestamp
+    youtubePlayer.value.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&start=${Math.floor(
+        seconds
+    )}&autoplay=1`
 }
 
 function scrollToSegment(segmentIndex: number) {
-  // Wait a bit for the DOM to update
-  setTimeout(() => {
-    const segmentElement = document.getElementById(`segment-${segmentIndex}`)
-    if (segmentElement) {
-      segmentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      // Add highlight effect
-      segmentElement.classList.add('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-gray-900')
-      setTimeout(() => {
-        segmentElement.classList.remove('ring-2', 'ring-primary', 'ring-offset-2', 'ring-offset-gray-900')
-      }, 2000)
-    }
-  }, 100)
+    // Wait a bit for the DOM to update
+    setTimeout(() => {
+        const segmentElement = document.getElementById(
+            `segment-${segmentIndex}`
+        )
+        if (segmentElement) {
+            segmentElement.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            })
+            // Add highlight effect
+            segmentElement.classList.add(
+                'ring-2',
+                'ring-primary',
+                'ring-offset-2',
+                'ring-offset-gray-900'
+            )
+            setTimeout(() => {
+                segmentElement.classList.remove(
+                    'ring-2',
+                    'ring-primary',
+                    'ring-offset-2',
+                    'ring-offset-gray-900'
+                )
+            }, 2000)
+        }
+    }, 100)
 }
+
+function highlightSearchTerm(text: string, segmentIndex: number): string {
+    if (
+        !currentSearchTerm.value ||
+        highlightedSegmentIndex.value !== segmentIndex
+    ) {
+        return text
+    }
+
+    const searchTerm = currentSearchTerm.value
+    const regex = new RegExp(
+        `(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+        'gi'
+    )
+    return text.replace(
+        regex,
+        '<mark class="bg-yellow-400 text-black px-0.5 rounded font-semibold">$1</mark>'
+    )
+}
+
+// Clear search term when changing videos manually
+watch(selectedVideo, () => {
+    currentSearchTerm.value = ''
+    highlightedSegmentIndex.value = null
+})
 </script>

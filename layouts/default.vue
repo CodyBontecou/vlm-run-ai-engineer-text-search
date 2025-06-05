@@ -18,13 +18,14 @@ const router = useRouter()
 const predictions = useState<any[]>('predictions', () => [])
 
 function handleSearchResult(result: any) {
-  // Navigate to home page with query params for video, timestamp, and segment
+  // Navigate to home page with query params for video, timestamp, segment, and search query
   router.push({
     path: '/',
     query: {
       video: result.videoIndex.toString(),
       time: result.timestamp.toString(),
-      segment: result.segmentIndex.toString()
+      segment: result.segmentIndex.toString(),
+      q: result.searchQuery || ''
     }
   })
 }

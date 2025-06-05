@@ -6,7 +6,7 @@ A Nuxt.js application that securely fetches predictions from VLM Run API server-
 
 1. Install dependencies:
    ```bash
-   pnpm install
+   npm install
    ```
 
 2. Create a `.env` file in the root directory with your VLM Run API key:

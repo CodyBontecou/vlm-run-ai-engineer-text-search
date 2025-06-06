@@ -14,4 +14,13 @@ export default defineNuxtConfig({
     colorMode: {
         preference: 'dark',
     },
+
+    app: {
+        head: {
+            htmlAttrs: {
+                lang: 'en'
+            },
+            title: 'VLM Transcript Search - AI Video Analysis'
+        }
+    }
 })

@@ -1,4 +1,4 @@
-import { VlmRun } from 'vlmrun'
+import { getVlmRunClient, getCachedPrediction, setCachedPrediction } from '~/server/utils/vlmrun-client'
 
 export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
@@ -10,6 +10,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Check cache first
+  const cached = getCachedPrediction(id)
+  if (cached) {
+    return cached
+  }
+
   const config = useRuntimeConfig()
   
   if (!config.vlmrunApiKey) {
@@ -19,12 +25,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const vlmrun = new VlmRun({
-    apiKey: config.vlmrunApiKey
-  })
+  const vlmrun = getVlmRunClient(config.vlmrunApiKey)
 
   try {
     const prediction = await vlmrun.predictions.get(id)
+    
+    // Cache the result
+    setCachedPrediction(id, prediction)
+    
     return prediction
   } catch (error) {
     throw createError({

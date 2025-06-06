@@ -111,7 +111,7 @@
                 <h3 class="text-lg font-semibold mb-4">Transcript</h3>
 
                 <!-- Metadata -->
-                <UCard :ui="{ body: { padding: 'p-3' } }" class="mb-4">
+                <UCard class="mb-4">
                     <div class="text-sm space-y-1">
                         <p>
                             <span class="text-gray-400">Duration:</span>
@@ -174,7 +174,7 @@
                             <UButton
                                 :label="formatTimestamp(segment.end_time)"
                                 size="md"
-                                color="gray"
+                                color="neutral"
                                 variant="soft"
                                 icon="i-heroicons-stop-circle"
                                 @click="seekToTime(segment.end_time)"
@@ -281,7 +281,34 @@ const currentSearchTerm = ref<string>('')
 const highlightedSegmentIndex = ref<number | null>(null)
 
 // Use state management for predictions
-const predictionsState = useState<any[]>('predictions', () => [])
+interface PredictionData {
+    url: string
+    title: string
+    id: string
+    created_at: string
+    completed_at?: string
+    status: string
+    message?: string
+    response?: {
+        metadata?: {
+            duration: number
+        }
+        segments?: Array<{
+            start_time: number
+            end_time: number
+            audio?: {
+                content: string
+            }
+            video?: {
+                content: string
+            }
+        }>
+    }
+}
+
+const predictionsState = useState<PredictionData[]>('predictions', () => [])
+
+const batchKey = videosData.map(item => item.id).sort().join(',')
 
 const {
     data: predictions,
@@ -292,18 +319,26 @@ const {
     body: {
         ids: videosData.map(item => item.id),
     },
-    transform: response => {
+    key: `predictions-batch-${batchKey}`,
+    transform: (response: any[]) => {
         return response
-            .filter(item => item.data !== null)
-            .map((item, index) => ({
-                ...item.data,
-                url: videosData[index].url,
-                title:
-                    videosData[index].title ||
-                    `VLM Prediction Analysis ${index + 1}`,
-            }))
+            .filter((item: any) => item.data !== null)
+            .map((item: any, index: number) => {
+                // Find the correct video data by matching IDs
+                const videoData = videosData.find(video => video.id === item.id)
+                return {
+                    ...item.data,
+                    url: videoData?.url || '',
+                    title: videoData?.title || `VLM Prediction Analysis ${index + 1}`,
+                }
+            })
     },
     server: false,
+    default: () => [],
+    getCachedData(key: string) {
+        const nuxtApp = useNuxtApp()
+        return (nuxtApp.ssrContext?.cache as any)?.[key] || (nuxtApp.payload.data as any)[key]
+    }
 })
 
 // Update state when predictions are loaded
@@ -394,7 +429,6 @@ function seekToTime(seconds: number) {
     if (!url) return
 
     const videoId = url.split('v=')[1]?.split('&')[0]
-    const currentSrc = youtubePlayer.value.src
 
     // Update the iframe src with the timestamp
     youtubePlayer.value.src = `https://www.youtube.com/embed/${videoId}?enablejsapi=1&start=${Math.floor(

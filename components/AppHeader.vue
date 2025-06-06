@@ -218,6 +218,10 @@ const emit = defineEmits<{
     'select-result': [result: SearchResult]
 }>()
 
+// Use optimized search index
+const predictionsRef = computed(() => props.predictions || [])
+const { searchIndex } = useSearchIndex(predictionsRef)
+
 const handleSearch = debounce(() => {
     if (!searchQuery.value || searchQuery.value.length < 2) {
         searchResults.value = []
@@ -225,48 +229,22 @@ const handleSearch = debounce(() => {
     }
 
     isSearching.value = true
-    const query = searchQuery.value.toLowerCase()
-    const results: SearchResult[] = []
-
-    if (!props.predictions || !Array.isArray(props.predictions)) {
-        isSearching.value = false
-        return
+    
+    try {
+        const results = searchIndex(searchQuery.value, 10)
+        searchResults.value = results.map(entry => ({
+            videoIndex: entry.videoIndex,
+            videoTitle: entry.videoTitle,
+            segmentIndex: entry.segmentIndex,
+            timestamp: entry.timestamp,
+            content: entry.content,
+            type: entry.type
+        }))
+    } catch (error) {
+        console.error('Search error:', error)
+        searchResults.value = []
     }
-
-    props.predictions.forEach((prediction: any, videoIndex: number) => {
-        const videoTitle =
-            prediction.title || `VLM Prediction ${videoIndex + 1}`
-
-        prediction.response?.segments?.forEach(
-            (segment: any, segmentIndex: number) => {
-                // Search in audio content
-                if (segment.audio?.content?.toLowerCase().includes(query)) {
-                    results.push({
-                        videoIndex,
-                        videoTitle,
-                        segmentIndex,
-                        timestamp: segment.start_time || 0,
-                        content: segment.audio.content,
-                        type: 'audio',
-                    })
-                }
-
-                // Search in video content
-                if (segment.video?.content?.toLowerCase().includes(query)) {
-                    results.push({
-                        videoIndex,
-                        videoTitle,
-                        segmentIndex,
-                        timestamp: segment.start_time || 0,
-                        content: segment.video.content,
-                        type: 'video',
-                    })
-                }
-            }
-        )
-    })
-
-    searchResults.value = results.slice(0, 10) // Limit to 10 results
+    
     isSearching.value = false
 }, 300)
 
@@ -284,45 +262,22 @@ const handleMobileSearch = debounce(() => {
     }
 
     isMobileSearching.value = true
-    const query = mobileSearchQuery.value.toLowerCase()
-    const results: SearchResult[] = []
-
-    if (!props.predictions || !Array.isArray(props.predictions)) {
-        isMobileSearching.value = false
-        return
+    
+    try {
+        const results = searchIndex(mobileSearchQuery.value, 10)
+        mobileSearchResults.value = results.map(entry => ({
+            videoIndex: entry.videoIndex,
+            videoTitle: entry.videoTitle,
+            segmentIndex: entry.segmentIndex,
+            timestamp: entry.timestamp,
+            content: entry.content,
+            type: entry.type
+        }))
+    } catch (error) {
+        console.error('Mobile search error:', error)
+        mobileSearchResults.value = []
     }
-
-    props.predictions.forEach((prediction: any, videoIndex: number) => {
-        const videoTitle = prediction.title || `VLM Prediction ${videoIndex + 1}`
-
-        prediction.response?.segments?.forEach((segment: any, segmentIndex: number) => {
-            // Search in audio content
-            if (segment.audio?.content?.toLowerCase().includes(query)) {
-                results.push({
-                    videoIndex,
-                    videoTitle,
-                    segmentIndex,
-                    timestamp: segment.start_time || 0,
-                    content: segment.audio.content,
-                    type: 'audio',
-                })
-            }
-
-            // Search in video content
-            if (segment.video?.content?.toLowerCase().includes(query)) {
-                results.push({
-                    videoIndex,
-                    videoTitle,
-                    segmentIndex,
-                    timestamp: segment.start_time || 0,
-                    content: segment.video.content,
-                    type: 'video',
-                })
-            }
-        })
-    })
-
-    mobileSearchResults.value = results.slice(0, 10) // Limit to 10 results
+    
     isMobileSearching.value = false
 }, 300)
 

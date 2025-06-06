@@ -177,7 +177,18 @@
 </template>
 
 <script setup lang="ts">
-import { debounce } from 'lodash-es'
+// Simple debounce implementation to avoid loading lodash-es immediately
+function debounce(func: Function, wait: number) {
+    let timeout: NodeJS.Timeout
+    return function executedFunction(...args: any[]) {
+        const later = () => {
+            clearTimeout(timeout)
+            func(...args)
+        }
+        clearTimeout(timeout)
+        timeout = setTimeout(later, wait)
+    }
+}
 
 interface SearchResult {
     videoIndex: number

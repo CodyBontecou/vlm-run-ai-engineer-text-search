@@ -22,5 +22,26 @@ export default defineNuxtConfig({
             },
             title: 'VLM Transcript Search - AI Video Analysis'
         }
+    },
+
+    // Performance optimizations
+    experimental: {
+        payloadExtraction: false,
+    },
+
+    nitro: {
+        compressPublicAssets: true,
+    },
+
+    vite: {
+        build: {
+            rollupOptions: {
+                output: {
+                    manualChunks: {
+                        'vlmrun': ['vlmrun']
+                    }
+                }
+            }
+        }
     }
 })

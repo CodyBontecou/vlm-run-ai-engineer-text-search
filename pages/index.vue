@@ -19,7 +19,22 @@
                         frameborder="0"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen
+                        loading="lazy"
                     ></iframe>
+                </div>
+            </div>
+            
+            <!-- Video player skeleton -->
+            <div
+                v-else-if="pending"
+                class="mb-4 flex-shrink-0"
+            >
+                <div class="aspect-video bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded-lg shadow-lg flex items-center justify-center">
+                    <div class="text-gray-500">
+                        <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 6a2 2 0 012-2h6l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
 
@@ -33,14 +48,15 @@
 
                 <div v-if="pending" class="space-y-2">
                     <div
-                        v-for="i in 4"
+                        v-for="i in 5"
                         :key="i"
-                        class="flex gap-3 p-3 bg-gray-900 rounded-lg animate-pulse"
+                        class="flex gap-3 p-3 bg-gray-900 rounded-lg"
                     >
-                        <div class="w-32 h-20 bg-gray-800 rounded"></div>
+                        <div class="w-32 h-20 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded"></div>
                         <div class="flex-1 space-y-2">
-                            <div class="h-4 bg-gray-800 rounded w-3/4"></div>
-                            <div class="h-3 bg-gray-800 rounded w-1/2"></div>
+                            <div class="h-4 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded" :style="{ width: `${60 + (i * 5)}%` }"></div>
+                            <div class="h-3 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded" :style="{ width: `${30 + (i * 3)}%` }"></div>
+                            <div class="h-3 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded w-1/4"></div>
                         </div>
                     </div>
                 </div>
@@ -65,6 +81,8 @@
                             :src="getThumbnailUrl(prediction.url)"
                             :alt="prediction.title"
                             class="w-32 h-20 object-cover rounded"
+                            loading="lazy"
+                            decoding="async"
                         />
                         <div class="flex-1 min-w-0">
                             <h3 class="font-medium text-sm line-clamp-2">
@@ -202,16 +220,38 @@
                 </div>
             </div>
 
-            <div
-                v-else-if="pending"
-                class="flex items-center justify-center h-full"
-            >
-                <div class="text-center">
-                    <UIcon
-                        name="i-heroicons-arrow-path"
-                        class="w-12 h-12 mb-2 animate-spin text-gray-500"
-                    />
-                    <p class="text-gray-500">Loading transcripts...</p>
+            <div v-else-if="pending" class="space-y-4">
+                <div class="animate-pulse">
+                    <div class="h-6 bg-gradient-to-r from-gray-800 via-gray-700 to-gray-800 bg-[length:200%_100%] animate-shimmer rounded w-32 mb-4"></div>
+                    
+                    <!-- Metadata skeleton -->
+                    <div class="bg-gray-800 rounded-lg p-3 mb-4">
+                        <div class="space-y-2">
+                            <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-24"></div>
+                            <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-32"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Segment skeletons -->
+                    <div class="space-y-3">
+                        <div
+                            v-for="i in 4"
+                            :key="i"
+                            class="bg-gray-800 rounded-lg p-4 border border-gray-700"
+                        >
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="h-8 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-16"></div>
+                                <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-4"></div>
+                                <div class="h-8 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-16"></div>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="h-3 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-20"></div>
+                                <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded"></div>
+                                <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-4/5"></div>
+                                <div class="h-4 bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 bg-[length:200%_100%] animate-shimmer rounded w-3/5"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -247,7 +287,7 @@ const {
     data: predictions,
     pending,
     error,
-} = await useFetch('/api/predictions/batch', {
+} = useLazyFetch('/api/predictions/batch', {
     method: 'POST',
     body: {
         ids: videosData.map(item => item.id),
@@ -263,6 +303,7 @@ const {
                     `VLM Prediction Analysis ${index + 1}`,
             }))
     },
+    server: false,
 })
 
 // Update state when predictions are loaded

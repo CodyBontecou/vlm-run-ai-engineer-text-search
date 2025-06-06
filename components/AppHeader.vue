@@ -107,7 +107,70 @@
                     color="gray"
                     variant="ghost"
                     class="sm:hidden"
+                    @click="toggleMobileSearch"
                 />
+            </div>
+        </div>
+
+        <!-- Mobile Search Bar (slides down from nav) -->
+        <div 
+            v-if="showMobileSearch" 
+            class="sm:hidden bg-gray-900 border-b border-gray-700 px-4 py-3"
+        >
+            <div class="flex items-center gap-2">
+                <UInput
+                    v-model="mobileSearchQuery"
+                    placeholder="Search transcripts..."
+                    @update:model-value="handleMobileSearch"
+                    class="flex-1"
+                    autofocus
+                />
+                <UButton
+                    icon="i-heroicons-x-mark"
+                    color="gray"
+                    variant="ghost"
+                    @click="closeMobileSearch"
+                />
+            </div>
+            
+            <!-- Mobile Search Results -->
+            <div v-if="mobileSearchResults && mobileSearchResults.length > 0" class="mt-3 space-y-2 max-h-64 overflow-y-auto">
+                <div
+                    v-for="(result, idx) in mobileSearchResults"
+                    :key="idx"
+                    @click="selectMobileSearchResult(result)"
+                    class="p-3 bg-gray-800 hover:bg-gray-700 cursor-pointer rounded-lg"
+                >
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <p class="text-sm font-medium text-white">
+                                    {{ result.videoTitle }}
+                                </p>
+                                <UBadge
+                                    :label="result.type"
+                                    :color="result.type === 'audio' ? 'blue' : 'green'"
+                                    variant="subtle"
+                                    size="xs"
+                                />
+                            </div>
+                            <p class="text-xs text-gray-400 line-clamp-2">
+                                ...<span v-html="highlightText(result.content, mobileSearchQuery)"></span>...
+                            </p>
+                        </div>
+                        <UBadge
+                            :label="formatTimestamp(result.timestamp)"
+                            color="primary"
+                            variant="soft"
+                            size="xs"
+                            class="ml-2 flex-shrink-0"
+                        />
+                    </div>
+                </div>
+            </div>
+            
+            <div v-else-if="mobileSearchQuery && !isMobileSearching" class="mt-3 p-4 text-center text-gray-500">
+                No results found for "{{ mobileSearchQuery }}"
             </div>
         </div>
     </header>
@@ -129,6 +192,12 @@ interface SearchResult {
 const searchQuery = ref<string>('')
 const searchResults = ref<SearchResult[]>([])
 const isSearching = ref<boolean>(false)
+
+// Mobile search state
+const showMobileSearch = ref<boolean>(false)
+const mobileSearchQuery = ref<string>('')
+const mobileSearchResults = ref<SearchResult[]>([])
+const isMobileSearching = ref<boolean>(false)
 
 const props = defineProps<{
     predictions?: any[]
@@ -194,6 +263,74 @@ function selectSearchResult(result: SearchResult) {
     emit('select-result', { ...result, searchQuery: searchQuery.value })
     searchQuery.value = ''
     searchResults.value = []
+}
+
+// Mobile search handlers
+const handleMobileSearch = debounce(() => {
+    if (!mobileSearchQuery.value || mobileSearchQuery.value.length < 2) {
+        mobileSearchResults.value = []
+        return
+    }
+
+    isMobileSearching.value = true
+    const query = mobileSearchQuery.value.toLowerCase()
+    const results: SearchResult[] = []
+
+    if (!props.predictions || !Array.isArray(props.predictions)) {
+        isMobileSearching.value = false
+        return
+    }
+
+    props.predictions.forEach((prediction: any, videoIndex: number) => {
+        const videoTitle = prediction.title || `VLM Prediction ${videoIndex + 1}`
+
+        prediction.response?.segments?.forEach((segment: any, segmentIndex: number) => {
+            // Search in audio content
+            if (segment.audio?.content?.toLowerCase().includes(query)) {
+                results.push({
+                    videoIndex,
+                    videoTitle,
+                    segmentIndex,
+                    timestamp: segment.start_time || 0,
+                    content: segment.audio.content,
+                    type: 'audio',
+                })
+            }
+
+            // Search in video content
+            if (segment.video?.content?.toLowerCase().includes(query)) {
+                results.push({
+                    videoIndex,
+                    videoTitle,
+                    segmentIndex,
+                    timestamp: segment.start_time || 0,
+                    content: segment.video.content,
+                    type: 'video',
+                })
+            }
+        })
+    })
+
+    mobileSearchResults.value = results.slice(0, 10) // Limit to 10 results
+    isMobileSearching.value = false
+}, 300)
+
+function selectMobileSearchResult(result: SearchResult) {
+    emit('select-result', { ...result, searchQuery: mobileSearchQuery.value })
+    closeMobileSearch()
+}
+
+function toggleMobileSearch() {
+    showMobileSearch.value = !showMobileSearch.value
+    if (!showMobileSearch.value) {
+        closeMobileSearch()
+    }
+}
+
+function closeMobileSearch() {
+    showMobileSearch.value = false
+    mobileSearchQuery.value = ''
+    mobileSearchResults.value = []
 }
 
 function highlightMatch(text: string, query: string): string {

@@ -1,5 +1,7 @@
 <template>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-5rem)]">
+    <div
+        class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-5rem)] lg:grid-rows-none grid-rows-[60%_40%]"
+    >
         <!-- Left column - Video player and list -->
         <div class="flex flex-col h-full overflow-hidden">
             <!-- Video player -->
@@ -256,7 +258,9 @@ const {
             .map((item, index) => ({
                 ...item.data,
                 url: videosData[index].url,
-                title: videosData[index].title || `VLM Prediction Analysis ${index + 1}`,
+                title:
+                    videosData[index].title ||
+                    `VLM Prediction Analysis ${index + 1}`,
             }))
     },
 })

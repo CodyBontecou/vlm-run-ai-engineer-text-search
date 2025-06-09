@@ -24,4 +24,29 @@ export const videosData = [
         url: 'https://www.youtube.com/watch?v=9u6xvcNJaxc',
         title: 'The 4 Patterns of AI Native Development',
     },
+    {
+        id: '8583a357-d96e-449f-a701-3b5b50115846',
+        url: 'https://www.youtube.com/watch?v=xhKgTkzSmuQ',
+        title: 'AI Engineer World’s Fair 2025 - Tiny Teams',
+    },
+    {
+        id: 'c2ac80db-c359-4f94-8443-871dfa58e26c',
+        url: 'https://www.youtube.com/watch?v=3k4a0PemMu4',
+        title: 'AI Engineer World’s Fair 2025 - LLM RECSYS',
+    },
+    {
+        id: 'f92bbc6d-4666-4cbe-b06b-7643069cc777',
+        url: 'https://www.youtube.com/watch?v=a0TyTMDh1is',
+        title: 'Retrieval + Search',
+    },
+    {
+        id: '31162546-1810-48bc-bb7b-64926605b560',
+        url: 'https://www.youtube.com/watch?v=Vqsfn9rWXR8',
+        title: "AI Engineer World's Fair 2025 - Evals",
+    },
+    {
+        id: 'ba5c5eeb-b0f7-41d0-bef3-3e03895783f8',
+        url: 'https://www.youtube.com/watch?v=-9E9_21tx04',
+        title: 'AI Engineer World’s Fair 2025 - Reasoning + RL',
+    },
 ]

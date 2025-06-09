@@ -333,12 +333,8 @@ const {
                 }
             })
     },
-    server: false,
+    server: true,
     default: () => [],
-    getCachedData(key: string) {
-        const nuxtApp = useNuxtApp()
-        return (nuxtApp.ssrContext?.cache as any)?.[key] || (nuxtApp.payload.data as any)[key]
-    }
 })
 
 // Update state when predictions are loaded

@@ -103,7 +103,8 @@ const { data: predictions } = await useFetch('/api/predictions/batch', {
         views: Math.floor(Math.random() * 100000) + 1000,
         duration: Math.floor(Math.random() * 600) + 60
       }))
-  }
+  },
+  server: true
 })
 
 const currentVideo = computed(() => predictions.value?.[videoId.value])
